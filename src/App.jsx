@@ -1,33 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useMutation, useQuery } from 'react-query'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const postQuery = useQuery(["posts"], () => {
+    return fetch("https://jsonplaceholder.org/posts").then(res => res.json())
+  }, {
+    enabled: false
+  })
 
+  const mutateQuery = useMutation(["users"], (newPost) => {
+    return fetch("https://jsonplaceholder.org/users", {
+      method: "POST",
+      body: JSON.stringify(newPost),
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8'
+      }
+    }).then(res => res.json())
+
+  })
+
+  const { data, isLoading, refetch } = postQuery;
+
+  if (isLoading) {
+    return (<>Looading...</>)
+  }
+
+  console.log(mutateQuery.data)
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <button onClick={refetch}>Fetch Posts</button>
+      <button onClick={() => mutateQuery.mutate({ title: "test-title", body: "test-body", userId: 1 })}>Add Record</button>
+      <button onClick={() => mutateQuery.reset()}>Remove Record</button>
+      {
+        data?.map((item, index) => (
+          <div key={index}>{item.title}</div>
+        ))
+      }
     </>
   )
 }
